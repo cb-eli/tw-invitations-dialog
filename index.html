@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <!-- Dialog Modal -->
+    <!-- Main Dialog Modal -->
     <div id="invite-dialog" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex justify-center p-0 sm:p-4 z-50 hidden sm:items-center">
         <div class="bg-white rounded-none sm:rounded-xl shadow-2xl w-full min-h-full sm:min-h-0 sm:max-w-4xl lg:h-[90vh] flex flex-col lg:overflow-hidden">
             <!-- Header -->
@@ -119,10 +119,6 @@
                     <button id="cancel-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </button>
-                    <button id="send-email-btn" disabled class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center">
-                        <i class="fa-solid fa-paper-plane fa-fw mr-2"></i>
-                        Send Email Invitations
-                    </button>
                     <button id="save-changes-btn" disabled class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed">
                         <span id="save-changes-text">Save Changes (0)</span>
                     </button>
@@ -130,6 +126,22 @@
             </div>
         </div>
     </div>
+    
+    <!-- Confirmation Dialog -->
+    <div id="confirm-send-dialog" class="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
+            <p class="text-gray-700 text-lg">Would you like to send invitation emails to the new participants?</p>
+            <div class="mt-6 flex justify-center items-center gap-6">
+                <button id="confirm-dont-send-btn" class="text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline">
+                    Don't Send
+                </button>
+                <button id="confirm-send-btn" class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -157,10 +169,12 @@
         const clearAllBtn = document.getElementById('clear-all-btn');
         const saveChangesBtn = document.getElementById('save-changes-btn');
         const saveChangesText = document.getElementById('save-changes-text');
-        const sendEmailBtn = document.getElementById('send-email-btn');
         const invitedCountMain = document.getElementById('invited-count-main');
         const copyLinkBtn = document.getElementById('copy-link-btn');
         const copyLinkText = document.getElementById('copy-link-text');
+        const confirmSendDialog = document.getElementById('confirm-send-dialog');
+        const confirmSendBtn = document.getElementById('confirm-send-btn');
+        const confirmDontSendBtn = document.getElementById('confirm-dont-send-btn');
         
         // Panels and Lists
         const panelSelect = document.getElementById('panel-select');
@@ -378,7 +392,6 @@
             invitedCountMain.textContent = count;
             
             clearAllBtn.classList.toggle('hidden', count === 0);
-            sendEmailBtn.disabled = count === 0;
             saveChangesBtn.disabled = !hasChanges;
 
             renderSelectionList();
@@ -489,7 +502,25 @@
 
         const closeDialog = () => {
             dialog.classList.add('hidden');
+            confirmSendDialog.classList.add('hidden');
             document.body.style.overflow = '';
+        };
+        
+        const saveAndClose = (sendEmails = false) => {
+            console.log("Saving student IDs:", Array.from(invitedStudentIds));
+            alert(`Saved ${invitedStudentIds.size} student invitations.`);
+            
+            if(sendEmails) {
+                 const newStudentIds = new Set([...invitedStudentIds].filter(id => !initialInvitedStudentIds.has(id)));
+                 if (newStudentIds.size > 0) {
+                    console.log("Sending emails to new students:", Array.from(newStudentIds).map(id => allStudents.get(id)));
+                    alert(`Email invitations would be sent to ${newStudentIds.size} new student(s).`);
+                 }
+            }
+
+            initialInvitedStudentIds = new Set(invitedStudentIds);
+            updateUI();
+            closeDialog();
         };
 
         // --- EVENT LISTENERS ---
@@ -512,19 +543,18 @@
 
         saveChangesBtn.addEventListener('click', () => {
             if (saveChangesBtn.disabled) return;
-            console.log("Saving student IDs:", Array.from(invitedStudentIds));
-            alert(`Saved ${invitedStudentIds.size} student invitations.`);
-            // Update the main "saved" state
-            initialInvitedStudentIds = new Set(invitedStudentIds);
-            updateUI(); // Re-render to disable the save button
-            closeDialog();
+            
+            const newStudentIds = new Set([...invitedStudentIds].filter(id => !initialInvitedStudentIds.has(id)));
+
+            if (newStudentIds.size > 0) {
+                confirmSendDialog.classList.remove('hidden');
+            } else {
+                saveAndClose(false);
+            }
         });
         
-        sendEmailBtn.addEventListener('click', () => {
-            if (sendEmailBtn.disabled) return;
-            console.log("Sending emails to:", Array.from(invitedStudentIds).map(id => allStudents.get(id)));
-            alert(`Email invitations would be sent to ${invitedStudentIds.size} student(s).`);
-        });
+        confirmSendBtn.addEventListener('click', () => saveAndClose(true));
+        confirmDontSendBtn.addEventListener('click', () => saveAndClose(false));
         
         copyLinkBtn.addEventListener('click', () => {
             navigator.clipboard.writeText("https://lesson.link/aB3xY9").then(() => {
