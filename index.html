@@ -203,13 +203,6 @@
                 const selectedInClass = studentIdsInClass.filter(id => invitedStudentIds.has(id)).length;
                 const isExpanded = expandedClassrooms.has(classroom.id);
 
-                let classroomCheckboxState = 'unchecked';
-                if (classroom.students.length > 0 && selectedInClass === classroom.students.length) {
-                    classroomCheckboxState = 'checked';
-                } else if (selectedInClass > 0) {
-                    classroomCheckboxState = 'indeterminate';
-                }
-
                 const studentListHTML = isExpanded ? `
                     <div class="pl-8 pr-4 pb-3 border-t border-gray-200">
                         <div class="mt-3 space-y-2">
@@ -249,13 +242,20 @@
                 `;
             }).join('');
             
+            // CORRECTED LOGIC: Set checked and indeterminate state after rendering
             document.querySelectorAll('.classroom-checkbox').forEach(el => {
                  const classroomId = el.dataset.classroomIdCheckbox;
                  const classroom = mockClassrooms.find(c => c.id === classroomId);
                  if (!classroom) return;
+
                  const studentIdsInClass = classroom.students.map(s => s.id);
                  const selectedInClass = studentIdsInClass.filter(id => invitedStudentIds.has(id)).length;
-                 el.indeterminate = selectedInClass > 0 && selectedInClass < classroom.students.length;
+                 
+                 const isFullySelected = classroom.students.length > 0 && selectedInClass === classroom.students.length;
+                 const isPartiallySelected = selectedInClass > 0 && !isFullySelected;
+
+                 el.checked = isFullySelected;
+                 el.indeterminate = isPartiallySelected;
             });
         };
 
