@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile-Optimized Invite Students Dialog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Styles for active/inactive tabs */
+        .tab-btn.active {
+            border-bottom-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-100">
+
+    <!-- Main Page Content -->
+    <div class="min-h-screen w-full flex justify-center items-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-md text-center">
+            <h1 class="text-2xl font-bold text-gray-800">My Awesome Lesson</h1>
+            <p class="mt-2 text-gray-600">
+                There are currently <span id="invited-count-main" class="font-bold text-indigo-600">3</span> students invited.
+            </p>
+            <button id="open-dialog-btn" class="mt-6 px-6 py-3 text-base font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Manage Invitations
+            </button>
+        </div>
+    </div>
+
+    <!-- Dialog Modal -->
+    <div id="invite-dialog" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto flex justify-center p-0 sm:p-4 z-50 hidden sm:items-center">
+        <div class="bg-white rounded-none sm:rounded-xl shadow-2xl w-full min-h-full sm:min-h-0 sm:max-w-4xl lg:h-[90vh] flex flex-col lg:overflow-hidden">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
+                <h2 class="text-xl font-bold text-gray-800">Invite Students</h2>
+                <button id="close-dialog-btn" class="p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors">
+                    <i class="fa-solid fa-xmark fa-fw text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="lg:flex-grow flex flex-col lg:flex-row lg:min-h-0">
+
+                <!-- Mobile Tab Navigation -->
+                <div class="lg:hidden border-b border-gray-200 flex-shrink-0">
+                    <div class="flex">
+                        <button id="tab-select" class="tab-btn flex-1 p-4 text-center text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors active">
+                            Select Students
+                        </button>
+                        <button id="tab-invited" class="tab-btn flex-1 p-4 text-center text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors">
+                            <span id="invited-tab-label">Invited (0)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Left Panel / Select Tab Content -->
+                <div id="panel-select" class="w-full lg:w-3/5 lg:border-r border-gray-200 flex flex-col lg:min-h-0">
+                    <div class="p-4 border-b border-gray-200 flex-shrink-0">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-2 gap-2">
+                            <p class="text-sm text-gray-600">Select classrooms or individual students.</p>
+                            <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex-shrink-0">
+                                Manage My Classes
+                            </a>
+                        </div>
+                        <input id="search-input" type="text" placeholder="Search for a class, student, or email..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div id="selection-list" class="p-4 space-y-4 custom-scrollbar lg:flex-grow lg:overflow-y-auto">
+                        <!-- Classroom items will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Right Panel / Invited Tab Content -->
+                <div id="panel-invited" class="w-full lg:w-2/5 flex-col lg:min-h-0 hidden lg:flex">
+                    <div class="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
+                        <h3 class="font-bold text-gray-800 flex items-center">
+                            <i class="fa-solid fa-users fa-fw mr-2"></i>
+                            <span id="invited-count-header">Invited (0)</span>
+                        </h3>
+                        <button id="clear-all-btn" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hidden">
+                            Clear all
+                        </button>
+                    </div>
+                    <div id="summary-list-container" class="p-4 custom-scrollbar lg:flex-grow lg:overflow-y-auto">
+                         <!-- Summary items will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-3 border-t border-gray-200 bg-gray-50 space-y-2 flex-shrink-0">
+                <div class="flex flex-col sm:flex-row items-center gap-2">
+                    <input type="text" readonly value="https://lesson.link/aB3xY9" class="w-full px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-300 rounded-md">
+                    <button id="copy-link-btn" class="w-full sm:w-auto sm:flex-shrink-0 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center">
+                        <i class="fa-solid fa-copy fa-fw mr-2"></i>
+                        <span id="copy-link-text">Copy Link</span>
+                    </button>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:justify-end sm:items-center gap-2">
+                    <button id="cancel-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button id="send-email-btn" disabled class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane fa-fw mr-2"></i>
+                        Send Email Invitations
+                    </button>
+                    <button id="save-changes-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <span id="save-changes-text">Save Changes (0)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- MOCK DATA ---
+        const mockClassrooms = [
+            { id: 'class_1', name: 'Grade 10 - Period 3', students: [{ id: 'stu_101', name: 'Alice Johnson', email: 'alice.j@example.com', status: 'active' }, { id: 'stu_102', name: 'Ben Carter', email: 'b.carter@example.com', status: 'pending' }, { id: 'stu_103', name: 'Catherine Davis', email: 'cathy.d@example.com', status: 'active' }, { id: 'stu_104', name: 'David Evans', email: 'dave.e@example.com', status: 'pending' }] },
+            { id: 'class_2', name: 'Creative Writing Club', students: [{ id: 'stu_201', name: 'Frankie Gomez', email: 'frank.g@example.com', status: 'active' }, { id: 'stu_101', name: 'Alice Johnson', email: 'alice.j@example.com', status: 'active' }, { id: 'stu_202', name: 'Grace Hernandez', email: 'grace.h@example.com', status: 'pending' }] },
+            { id: 'class_3', name: 'Shakespeare Seminar', students: [{ id: 'stu_301', name: 'Ivy King', email: 'ivy.k@example.com', status: 'active' }, { id: 'stu_302', name: 'Jack Lee', email: 'jack.lee@example.com', status: 'active' }, { id: 'stu_303', name: 'Karen Miller', email: 'karen.m@example.com', status: 'pending' }, { id: 'stu_304', name: 'Leo Nelson', email: 'leo.n@example.com', status: 'active' }, { id: 'stu_305', name: 'Mia Ortiz', email: 'mia.o@example.com', status: 'pending' }] },
+            { id: 'class_4', name: 'Journalism Club', students: [] },
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let invitedStudentIds = new Set(['stu_102', 'stu_303', 'stu_305']);
+        let expandedClassrooms = new Set();
+        let searchTerm = '';
+        const allStudents = new Map(mockClassrooms.flatMap(c => c.students).map(s => [s.id, s]));
+
+        // --- DOM ELEMENTS ---
+        const dialog = document.getElementById('invite-dialog');
+        const openDialogBtn = document.getElementById('open-dialog-btn');
+        const closeDialogBtn = document.getElementById('close-dialog-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const searchInput = document.getElementById('search-input');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        const saveChangesBtn = document.getElementById('save-changes-btn');
+        const saveChangesText = document.getElementById('save-changes-text');
+        const sendEmailBtn = document.getElementById('send-email-btn');
+        const invitedCountMain = document.getElementById('invited-count-main');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+        const copyLinkText = document.getElementById('copy-link-text');
+        
+        // Panels and Lists
+        const panelSelect = document.getElementById('panel-select');
+        const panelInvited = document.getElementById('panel-invited');
+        const selectionList = document.getElementById('selection-list');
+        const summaryListContainer = document.getElementById('summary-list-container');
+        
+        // Tabs and Labels
+        const tabSelect = document.getElementById('tab-select');
+        const tabInvited = document.getElementById('tab-invited');
+        const invitedTabLabel = document.getElementById('invited-tab-label');
+        const invitedCountHeader = document.getElementById('invited-count-header');
+
+
+        // --- RENDER FUNCTIONS ---
+
+        const renderSelectionList = () => {
+            const lowercasedFilter = searchTerm.toLowerCase();
+            const filteredClassrooms = mockClassrooms.map(c => {
+                const matchingStudents = c.students.filter(s =>
+                    s.name.toLowerCase().includes(lowercasedFilter) ||
+                    s.email.toLowerCase().includes(lowercasedFilter)
+                );
+                if (c.name.toLowerCase().includes(lowercasedFilter) || matchingStudents.length > 0) {
+                    return { ...c, students: matchingStudents.length > 0 ? matchingStudents : c.students };
+                }
+                return null;
+            }).filter(Boolean);
+            
+            if (searchTerm && !filteredClassrooms.every(c => expandedClassrooms.has(c.id))) {
+                 filteredClassrooms.forEach(c => expandedClassrooms.add(c.id));
+            }
+
+            if (filteredClassrooms.length === 0) {
+                selectionList.innerHTML = `<div class="text-center py-10 px-4"><p class="text-gray-600">No classrooms or students match your search.</p></div>`;
+                return;
+            }
+
+            selectionList.innerHTML = filteredClassrooms.map(classroom => {
+                const studentIdsInClass = classroom.students.map(s => s.id);
+                const selectedInClass = studentIdsInClass.filter(id => invitedStudentIds.has(id)).length;
+                const isExpanded = expandedClassrooms.has(classroom.id);
+
+                let classroomCheckboxState = 'unchecked';
+                if (classroom.students.length > 0 && selectedInClass === classroom.students.length) {
+                    classroomCheckboxState = 'checked';
+                } else if (selectedInClass > 0) {
+                    classroomCheckboxState = 'indeterminate';
+                }
+
+                const studentListHTML = isExpanded ? `
+                    <div class="pl-8 pr-4 pb-3 border-t border-gray-200">
+                        <div class="mt-3 space-y-2">
+                            ${classroom.students.map(student => `
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="student-${student.id}" data-student-id="${student.id}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 student-checkbox" ${invitedStudentIds.has(student.id) ? 'checked' : ''}>
+                                    <label for="student-${student.id}" class="ml-3 select-none flex-grow">
+                                        <div>
+                                            <span class="${student.status === 'pending' ? 'text-gray-500' : 'text-gray-800'}">
+                                                ${student.name}
+                                                ${student.status === 'pending' ? '<span class="ml-2 text-xs font-normal">(Invitation Sent)</span>' : ''}
+                                            </span>
+                                            <span class="block text-xs text-gray-400">${student.email}</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="bg-gray-50 rounded-lg" data-classroom-id="${classroom.id}">
+                        <div class="flex items-center p-3">
+                            <div class="flex items-center flex-grow min-w-0">
+                                <input type="checkbox" id="class-${classroom.id}" data-classroom-id-checkbox="${classroom.id}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 classroom-checkbox flex-shrink-0">
+                                <label for="class-${classroom.id}" class="ml-3 select-none truncate">
+                                    <span class="font-semibold text-gray-800">${classroom.name}</span>
+                                </label>
+                            </div>
+                            <span class="ml-2 text-sm text-gray-500 flex-shrink-0">(${classroom.students.length})</span>
+                            ${selectedInClass > 0 ? `<span class="ml-2 text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full hidden sm:inline">${selectedInClass === classroom.students.length ? 'All' : `${selectedInClass}`}</span>` : ''}
+                            ${classroom.students.length > 0 ? `<button data-toggle-id="${classroom.id}" class="ml-auto p-1 rounded-full hover:bg-gray-200 toggle-classroom-btn"><i class="fa-solid ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} fa-fw"></i></button>` : ''}
+                        </div>
+                        ${studentListHTML}
+                    </div>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('.classroom-checkbox').forEach(el => {
+                 const classroomId = el.dataset.classroomIdCheckbox;
+                 const classroom = mockClassrooms.find(c => c.id === classroomId);
+                 if (!classroom) return;
+                 const studentIdsInClass = classroom.students.map(s => s.id);
+                 const selectedInClass = studentIdsInClass.filter(id => invitedStudentIds.has(id)).length;
+                 el.indeterminate = selectedInClass > 0 && selectedInClass < classroom.students.length;
+            });
+        };
+
+        const renderSummaryList = () => {
+            const fullySelectedClasses = [];
+            const individualStudents = [];
+            const remainingSelectedIds = new Set(invitedStudentIds);
+
+            for (const classroom of mockClassrooms) {
+                if (classroom.students.length === 0) continue;
+                const classStudentIds = classroom.students.map(s => s.id);
+                const isFullySelected = classStudentIds.every(id => invitedStudentIds.has(id));
+
+                if (isFullySelected) {
+                    fullySelectedClasses.push({ type: 'class', data: classroom });
+                    classStudentIds.forEach(id => remainingSelectedIds.delete(id));
+                }
+            }
+
+            for (const studentId of remainingSelectedIds) {
+                const student = allStudents.get(studentId);
+                if (student) {
+                    individualStudents.push({ type: 'student', data: student });
+                }
+            }
+
+            fullySelectedClasses.sort((a, b) => a.data.name.localeCompare(b.data.name));
+            individualStudents.sort((a, b) => a.data.name.localeCompare(b.data.name));
+            
+            const rightPanelItems = [...fullySelectedClasses, ...individualStudents];
+
+            if (rightPanelItems.length === 0) {
+                summaryListContainer.innerHTML = `
+                    <div class="text-center text-gray-500 h-full flex flex-col justify-center items-center p-4">
+                        <i class="fa-solid fa-users fa-fw text-4xl mb-2 text-gray-400"></i>
+                        <p>No students have been invited yet.</p>
+                        <p class="text-xs mt-1">Use the panel on the left to make selections.</p>
+                    </div>`;
+            } else {
+                summaryListContainer.innerHTML = `<ul class="space-y-2">${rightPanelItems.map(item => {
+                    if (item.type === 'class') {
+                        const classroom = item.data;
+                        const isExpanded = expandedClassrooms.has(`summary-${classroom.id}`);
+                        return `
+                            <li class="bg-gray-100 rounded-md overflow-hidden border border-gray-200">
+                                <div class="flex items-center text-sm text-gray-800 p-2">
+                                    <button data-summary-toggle-id="${classroom.id}" class="p-1 rounded-full hover:bg-gray-200 summary-toggle-btn">
+                                        <i class="fa-solid ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} fa-fw text-base"></i>
+                                    </button>
+                                    <div class="flex-grow ml-2">
+                                        <span class="font-semibold">${classroom.name}</span>
+                                        <span class="block text-xs text-gray-500">${classroom.students.length} students</span>
+                                    </div>
+                                    <button data-remove-class-id="${classroom.id}" class="ml-2 p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 flex-shrink-0 remove-class-btn">
+                                        <i class="fa-solid fa-xmark fa-fw text-base"></i>
+                                    </button>
+                                </div>
+                                ${isExpanded ? `
+                                <ul class="pl-8 pr-2 pb-2 space-y-1 border-t border-gray-200 pt-2">
+                                    ${classroom.students.map(student => `
+                                        <li class="flex items-center text-sm text-gray-700 p-1 rounded-md">
+                                            <i class="fa-solid ${student.status === 'active' ? 'fa-user' : 'fa-envelope'} fa-fw mr-2 text-gray-500 flex-shrink-0"></i>
+                                            <div class="flex-grow"><span>${student.name}</span></div>
+                                        </li>
+                                    `).join('')}
+                                </ul>` : ''}
+                            </li>`;
+                    }
+                    if (item.type === 'student') {
+                        const student = item.data;
+                        return `
+                            <li class="flex items-center text-sm text-gray-800 bg-gray-100 p-2 rounded-md">
+                                <div class="flex items-start flex-grow">
+                                    <i class="fa-solid ${student.status === 'active' ? 'fa-user' : 'fa-envelope'} fa-fw mr-3 mt-1 text-gray-500 flex-shrink-0"></i>
+                                    <div class="flex-grow">
+                                        <span>${student.name}</span>
+                                        <span class="block text-xs text-gray-500">${student.email}</span>
+                                    </div>
+                                    ${student.status === 'pending' ? `<span class="ml-3 text-xs font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full self-center">Invited</span>` : ''}
+                                </div>
+                                <button data-remove-student-id="${student.id}" class="ml-2 p-1 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 flex-shrink-0 remove-student-btn">
+                                    <i class="fa-solid fa-xmark fa-fw text-base"></i>
+                                </button>
+                            </li>`;
+                    }
+                    return '';
+                }).join('')}</ul>`;
+            }
+        };
+
+        const updateUI = () => {
+            const count = invitedStudentIds.size;
+            invitedCountHeader.textContent = `Invited (${count})`;
+            invitedTabLabel.textContent = `Invited (${count})`;
+            saveChangesText.textContent = `Save Changes (${count})`;
+            invitedCountMain.textContent = count;
+            
+            clearAllBtn.classList.toggle('hidden', count === 0);
+            sendEmailBtn.disabled = count === 0;
+
+            renderSelectionList();
+            renderSummaryList();
+        };
+
+        // --- EVENT HANDLERS ---
+        
+        const handleSelectionChange = (e) => {
+            const classroomCheckbox = e.target.closest('.classroom-checkbox');
+            if (classroomCheckbox) {
+                const classroomId = classroomCheckbox.dataset.classroomIdCheckbox;
+                const classroom = mockClassrooms.find(c => c.id === classroomId);
+                if (!classroom) return;
+                
+                const studentIdsInClass = classroom.students.map(s => s.id);
+                const areAllSelected = studentIdsInClass.every(id => invitedStudentIds.has(id));
+
+                if (areAllSelected) {
+                    studentIdsInClass.forEach(id => invitedStudentIds.delete(id));
+                } else {
+                    studentIdsInClass.forEach(id => invitedStudentIds.add(id));
+                }
+                updateUI();
+            }
+
+            const studentCheckbox = e.target.closest('.student-checkbox');
+            if (studentCheckbox) {
+                const studentId = studentCheckbox.dataset.studentId;
+                if (invitedStudentIds.has(studentId)) {
+                    invitedStudentIds.delete(studentId);
+                } else {
+                    invitedStudentIds.add(studentId);
+                }
+                updateUI();
+            }
+
+            const toggleButton = e.target.closest('.toggle-classroom-btn');
+            if (toggleButton) {
+                const classroomId = toggleButton.dataset.toggleId;
+                if (expandedClassrooms.has(classroomId)) {
+                    expandedClassrooms.delete(classroomId);
+                } else {
+                    expandedClassrooms.add(classroomId);
+                }
+                renderSelectionList();
+            }
+        };
+        
+        const handleSummaryChange = (e) => {
+            const removeClassBtn = e.target.closest('.remove-class-btn');
+            if (removeClassBtn) {
+                const classroomId = removeClassBtn.dataset.removeClassId;
+                const classroom = mockClassrooms.find(c => c.id === classroomId);
+                if(classroom) {
+                    classroom.students.forEach(s => invitedStudentIds.delete(s.id));
+                    updateUI();
+                }
+            }
+
+            const removeStudentBtn = e.target.closest('.remove-student-btn');
+            if (removeStudentBtn) {
+                const studentId = removeStudentBtn.dataset.removeStudentId;
+                invitedStudentIds.delete(studentId);
+                updateUI();
+            }
+            
+            const summaryToggleBtn = e.target.closest('.summary-toggle-btn');
+            if (summaryToggleBtn) {
+                const classroomId = `summary-${summaryToggleBtn.dataset.summaryToggleId}`;
+                if (expandedClassrooms.has(classroomId)) {
+                    expandedClassrooms.delete(classroomId);
+                } else {
+                    expandedClassrooms.add(classroomId);
+                }
+                renderSummaryList();
+            }
+        };
+
+        const switchTab = (tabName) => {
+            if (tabName === 'select') {
+                tabSelect.classList.add('active');
+                tabInvited.classList.remove('active');
+                panelSelect.classList.remove('hidden');
+                panelInvited.classList.add('hidden');
+            } else { // 'invited'
+                tabSelect.classList.remove('active');
+                tabInvited.classList.add('active');
+                panelSelect.classList.add('hidden');
+                panelInvited.classList.remove('hidden');
+                panelInvited.classList.add('flex');
+            }
+        };
+
+        const openDialog = () => {
+            invitedStudentIds = new Set(['stu_102', 'stu_303', 'stu_305']);
+            expandedClassrooms = new Set();
+            searchTerm = '';
+            searchInput.value = '';
+            dialog.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            switchTab('select');
+            updateUI();
+        };
+
+        const closeDialog = () => {
+            dialog.classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+        // --- EVENT LISTENERS ---
+        openDialogBtn.addEventListener('click', openDialog);
+        closeDialogBtn.addEventListener('click', closeDialog);
+        cancelBtn.addEventListener('click', closeDialog);
+        
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderSelectionList();
+        });
+
+        selectionList.addEventListener('click', handleSelectionChange);
+        summaryListContainer.addEventListener('click', handleSummaryChange);
+
+        clearAllBtn.addEventListener('click', () => {
+            invitedStudentIds.clear();
+            updateUI();
+        });
+
+        saveChangesBtn.addEventListener('click', () => {
+            console.log("Saving student IDs:", Array.from(invitedStudentIds));
+            alert(`Saved ${invitedStudentIds.size} student invitations.`);
+            closeDialog();
+        });
+        
+        sendEmailBtn.addEventListener('click', () => {
+            if (invitedStudentIds.size > 0) {
+                console.log("Sending emails to:", Array.from(invitedStudentIds).map(id => allStudents.get(id)));
+                alert(`Email invitations would be sent to ${invitedStudentIds.size} student(s).`);
+            }
+        });
+        
+        copyLinkBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText("https://lesson.link/aB3xY9").then(() => {
+                copyLinkText.textContent = 'Copied!';
+                setTimeout(() => { copyLinkText.textContent = 'Copy Link'; }, 2000);
+            });
+        });
+
+        tabSelect.addEventListener('click', () => switchTab('select'));
+        tabInvited.addEventListener('click', () => switchTab('invited'));
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !dialog.classList.contains('hidden')) {
+                closeDialog();
+            }
+        });
+
+    });
+    </script>
+</body>
+</html>
