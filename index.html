@@ -123,7 +123,7 @@
                         <i class="fa-solid fa-paper-plane fa-fw mr-2"></i>
                         Send Email Invitations
                     </button>
-                    <button id="save-changes-btn" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <button id="save-changes-btn" disabled class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed">
                         <span id="save-changes-text">Save Changes (0)</span>
                     </button>
                 </div>
@@ -142,7 +142,8 @@
         ];
 
         // --- STATE MANAGEMENT ---
-        let invitedStudentIds = new Set(['stu_102', 'stu_303', 'stu_305']);
+        let initialInvitedStudentIds = new Set();
+        let invitedStudentIds = new Set();
         let expandedClasses = new Set();
         let searchTerm = '';
         const allStudents = new Map(mockClasses.flatMap(c => c.students).map(s => [s.id, s]));
@@ -173,6 +174,14 @@
         const invitedTabLabel = document.getElementById('invited-tab-label');
         const invitedCountHeader = document.getElementById('invited-count-header');
 
+        // --- HELPER FUNCTIONS ---
+        const areSetsEqual = (setA, setB) => {
+            if (setA.size !== setB.size) return false;
+            for (const item of setA) {
+                if (!setB.has(item)) return false;
+            }
+            return true;
+        };
 
         // --- RENDER FUNCTIONS ---
 
@@ -361,6 +370,8 @@
 
         const updateUI = () => {
             const count = invitedStudentIds.size;
+            const hasChanges = !areSetsEqual(initialInvitedStudentIds, invitedStudentIds);
+            
             invitedCountHeader.textContent = `Invited (${count})`;
             invitedTabLabel.textContent = `Invited (${count})`;
             saveChangesText.textContent = `Save Changes (${count})`;
@@ -368,6 +379,7 @@
             
             clearAllBtn.classList.toggle('hidden', count === 0);
             sendEmailBtn.disabled = count === 0;
+            saveChangesBtn.disabled = !hasChanges;
 
             renderSelectionList();
             renderSummaryList();
@@ -462,7 +474,10 @@
         };
 
         const openDialog = () => {
-            invitedStudentIds = new Set(['stu_102', 'stu_303', 'stu_305']);
+            // Store the initial state when opening the dialog
+            initialInvitedStudentIds = new Set(['stu_102', 'stu_303', 'stu_305']);
+            invitedStudentIds = new Set(initialInvitedStudentIds);
+            
             expandedClasses = new Set();
             searchTerm = '';
             searchInput.value = '';
@@ -496,16 +511,19 @@
         });
 
         saveChangesBtn.addEventListener('click', () => {
+            if (saveChangesBtn.disabled) return;
             console.log("Saving student IDs:", Array.from(invitedStudentIds));
             alert(`Saved ${invitedStudentIds.size} student invitations.`);
+            // Update the main "saved" state
+            initialInvitedStudentIds = new Set(invitedStudentIds);
+            updateUI(); // Re-render to disable the save button
             closeDialog();
         });
         
         sendEmailBtn.addEventListener('click', () => {
-            if (invitedStudentIds.size > 0) {
-                console.log("Sending emails to:", Array.from(invitedStudentIds).map(id => allStudents.get(id)));
-                alert(`Email invitations would be sent to ${invitedStudentIds.size} student(s).`);
-            }
+            if (sendEmailBtn.disabled) return;
+            console.log("Sending emails to:", Array.from(invitedStudentIds).map(id => allStudents.get(id)));
+            alert(`Email invitations would be sent to ${invitedStudentIds.size} student(s).`);
         });
         
         copyLinkBtn.addEventListener('click', () => {
