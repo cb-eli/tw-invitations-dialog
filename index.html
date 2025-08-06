@@ -223,6 +223,21 @@
                         </div>
                     </div>
                 ` : '';
+                
+                let selectedCountIndicator = '';
+                if (selectedInClass > 0) {
+                    const isAllSelected = selectedInClass === classroom.students.length;
+                    const desktopText = isAllSelected ? 'All students' : `${selectedInClass} student${selectedInClass > 1 ? 's' : ''}`;
+                    const mobileText = isAllSelected ? 'All' : selectedInClass;
+                    
+                    selectedCountIndicator = `
+                        <span class="ml-2 text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                            <span class="hidden sm:inline">${desktopText}</span>
+                            <span class="sm:hidden">${mobileText}</span>
+                        </span>
+                    `;
+                }
+
 
                 return `
                     <div class="bg-gray-50 rounded-lg" data-classroom-id="${classroom.id}">
@@ -233,8 +248,8 @@
                                     <span class="font-semibold text-gray-800">${classroom.name}</span>
                                 </label>
                             </div>
+                            ${selectedCountIndicator}
                             <span class="ml-2 text-sm text-gray-500 flex-shrink-0">(${classroom.students.length})</span>
-                            ${selectedInClass > 0 ? `<span class="ml-2 text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full hidden sm:inline">${selectedInClass === classroom.students.length ? 'All' : `${selectedInClass}`}</span>` : ''}
                             ${classroom.students.length > 0 ? `<button data-toggle-id="${classroom.id}" class="ml-auto p-1 rounded-full hover:bg-gray-200 toggle-classroom-btn"><i class="fa-solid ${isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'} fa-fw"></i></button>` : ''}
                         </div>
                         ${studentListHTML}
@@ -242,7 +257,7 @@
                 `;
             }).join('');
             
-            // CORRECTED LOGIC: Set checked and indeterminate state after rendering
+            // Set checked and indeterminate state after rendering
             document.querySelectorAll('.classroom-checkbox').forEach(el => {
                  const classroomId = el.dataset.classroomIdCheckbox;
                  const classroom = mockClassrooms.find(c => c.id === classroomId);
