@@ -68,7 +68,7 @@
                             Select Students
                         </button>
                         <button id="tab-invited" class="tab-btn flex-1 p-4 text-center text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-700 transition-colors">
-                            <span id="invited-tab-label">Invited (0)</span>
+                            <span id="invited-tab-label">Participants (0)</span>
                         </button>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                     <div class="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
                         <h3 class="font-bold text-gray-800 flex items-center">
                             <i class="fa-solid fa-users fa-fw mr-2"></i>
-                            <span id="invited-count-header">Invited (0)</span>
+                            <span id="invited-count-header">Participants (0)</span>
                         </h3>
                         <button id="clear-all-btn" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hidden">
                             Clear all
@@ -372,8 +372,8 @@
             const count = invitedStudentIds.size;
             const hasChanges = !areSetsEqual(initialInvitedStudentIds, invitedStudentIds);
             
-            invitedCountHeader.textContent = `Invited (${count})`;
-            invitedTabLabel.textContent = `Invited (${count})`;
+            invitedCountHeader.textContent = `Participants (${count})`;
+            invitedTabLabel.textContent = `Participants (${count})`;
             saveChangesText.textContent = `Save Changes (${count})`;
             invitedCountMain.textContent = count;
             
